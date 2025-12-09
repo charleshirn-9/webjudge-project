@@ -15,7 +15,7 @@ except KeyError:
 
 # 2. Initialize the Gemini 1.5 Pro model (which handles both text and vision)
 # This single model can replace both GPT-4 and GPT-4o.
-model = genai.GenerativeModel('gemini-2.5-pro')
+model = genai.GenerativeModel('gemini-flash-latest')
 
 def deconstruct_task_to_key_points(task_prompt: str) -> list:
     """Uses Gemini to convert a natural language task into a list of key, verifiable points."""
@@ -159,5 +159,6 @@ def evaluate_white_agent_output(white_agent_payload: dict) -> dict:
     print("--- ✅ Evaluation Finished ---")
     print(json.dumps(evaluation_result, indent=2))
     return evaluation_result
+
 
 # --- END OF FILE green_agent.py (Gemini Version) ---
