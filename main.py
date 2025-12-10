@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import uvicorn
-from green_agent import evaluate_white_agent_output
+from green_agentv2 import evaluate_white_agent_output
 
 app = FastAPI()
 
@@ -57,3 +57,4 @@ def run_evaluation(request: AgentRequest):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
