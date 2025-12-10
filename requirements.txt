@@ -1,5 +1,5 @@
 starlette
-a2a
+a2a-sdk
 uvicorn
 tomli
 google-generativeai
