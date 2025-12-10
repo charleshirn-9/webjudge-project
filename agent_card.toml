@@ -2,8 +2,8 @@ name = "webjudge-green-agent"
 description = "The assessment hosting agent for WebJudge."
 version = "0.1.0"
 
-defaultInputModes = ["text"]
-defaultOutputModes = ["text"]
+defaultInputModes = ["text/plain"]
+defaultOutputModes = ["text/plain"]
 
 [capabilities]
 streaming = false
@@ -18,7 +18,7 @@ examples = ["""
 http://localhost:9002/
 </white_agent_url>
 <task_prompt>
-Find a black Nike shoe, size 10, under $150.
+Find a black Nike shoe.
 </task_prompt>
 <action_budget>
 10
