@@ -12,7 +12,7 @@ from a2a.types import AgentCard
 from a2a.utils import new_agent_text_message, get_text_parts
 
 from my_a2a import send_message
-from green_agent import grade_agent_performance, deconstruct_task_to_key_points
+from green_agentv2 import grade_agent_performance, deconstruct_task_to_key_points
 
 def parse_tags(text):
     tags = {}
@@ -122,3 +122,4 @@ app = a2a_app.build()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
