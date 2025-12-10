@@ -96,7 +96,7 @@ class WebJudgeExecutor(AgentExecutor):
         pass
 
 try:
-    with open("webjudge.toml", "rb") as f:
+    with open("agent_card.toml", "rb") as f:
         agent_card_dict = tomli.load(f)
 except FileNotFoundError:
     print("⚠️ webjudge.toml not found!")
@@ -122,4 +122,5 @@ app = a2a_app.build()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
