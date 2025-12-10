@@ -4,17 +4,17 @@ import os
 import json
 import google.generativeai as genai
 from PIL import Image
+import io
+import base64
 
-# 1. Import and configure the Google Gemini client
-# The API key is read from the GOOGLE_API_KEY environment variable.
+
 try:
     genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 except KeyError:
     print("❌ ERROR: The GOOGLE_API_KEY environment variable is not set.")
     exit()
 
-# 2. Initialize the Gemini 1.5 Pro model (which handles both text and vision)
-# This single model can replace both GPT-4 and GPT-4o.
+
 model = genai.GenerativeModel('gemini-flash-latest')
 
 def deconstruct_task_to_key_points(task_prompt: str) -> list:
@@ -57,8 +57,22 @@ def grade_agent_performance(key_points: list, screenshots: list, action_log: str
     Uses Gemini Vision to grade the agent's performance based on a detailed rubric.
     """
     
-    # Prepare image inputs for the vision model
-    image_parts = [Image.open(p) for p in screenshots]
+    image_parts = []
+    for img_data in screenshots:
+        try:
+            if isinstance(img_data, str):
+                if len(img_data) > 200: 
+                    if "base64," in img_data:
+                        img_data = img_data.split("base64,")[1]
+                    
+                    image_bytes = base64.b64decode(img_data)
+                    image_parts.append(Image.open(io.BytesIO(image_bytes)))
+                
+                else:
+                    image_parts.append(Image.open(img_data))
+        except Exception as e:
+            print(f"⚠️ Error processing an image: {e}")
+            continue
 
     system_prompt = """
     You are an automated evaluator for web-browsing agents. Your task is to grade an agent's performance based on the provided evidence and a strict rubric.
@@ -159,6 +173,5 @@ def evaluate_white_agent_output(white_agent_payload: dict) -> dict:
     print("--- ✅ Evaluation Finished ---")
     print(json.dumps(evaluation_result, indent=2))
     return evaluation_result
-
 
 # --- END OF FILE green_agent.py (Gemini Version) ---
