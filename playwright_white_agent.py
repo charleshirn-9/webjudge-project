@@ -4,7 +4,7 @@ import time
 from playwright.sync_api import sync_playwright
 
 # Configuration
-GREEN_AGENT_URL = "http://127.0.0.1:8000/evaluate" 
+GREEN_AGENT_URL = "https://webjudge-project.onrender.com/evaluate" 
 def screenshot_to_base64(screenshot_bytes):
     """Helper to convert raw image bytes to a base64 string for the API."""
     return base64.b64encode(screenshot_bytes).decode('utf-8')
@@ -120,4 +120,5 @@ def run_naive_agent():
         print(f"❌ Failed to connect to Green Agent. Is 'main.py' running? Error: {e}")
 
 if __name__ == "__main__":
+
     run_naive_agent()
