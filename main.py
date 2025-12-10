@@ -4,7 +4,9 @@ import tomli
 import json
 import re
 import os
-from starlette.responses import JSONResponse 
+from starlette.responses import JSONResponse
+from starlette.middleware import Middleware 
+from starlette.middleware.cors import CORSMiddleware 
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.agent_execution import AgentExecutor, RequestContext
@@ -14,7 +16,7 @@ from a2a.types import AgentCard
 from a2a.utils import new_agent_text_message, get_text_parts
 
 from my_a2a import send_message
-from green_agentv2 import grade_agent_performance, deconstruct_task_to_key_points
+from green_agent import grade_agent_performance, deconstruct_task_to_key_points
 
 def parse_tags(text):
     tags = {}
@@ -92,10 +94,10 @@ class WebJudgeExecutor(AgentExecutor):
 
 
 try:
-    with open("agent_card.toml", "rb") as f:
+    with open("webjudge.toml", "rb") as f:
         agent_card_dict = tomli.load(f)
 except FileNotFoundError:
-    print("⚠️ agent_card.toml not found!")
+    print("⚠️ webjudge.toml not found!")
     agent_card_dict = {}
 
 if os.environ.get("RENDER_EXTERNAL_URL"):
@@ -115,20 +117,27 @@ a2a_app = A2AStarletteApplication(
 
 app = a2a_app.build()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],  
+    allow_headers=["*"], 
+)
+
 async def get_card(request):
+    """Sert la carte d'agent en JSON."""
     return JSONResponse(agent_card_dict)
 
 async def get_status(request):
+    """Health check."""
     return JSONResponse({"status": "ok", "agent": agent_card_dict.get("name")})
 
 app.add_route("/", get_card, methods=["GET"])
-app.add_route("/health", get_card, methods=["GET"]) 
+app.add_route("/health", get_status, methods=["GET"])
 app.add_route("/status", get_status, methods=["GET"])
 app.add_route("/.well-known/agent-card.json", get_card, methods=["GET"])
-
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-
