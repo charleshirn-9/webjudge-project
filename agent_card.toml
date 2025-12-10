@@ -2,8 +2,8 @@ name = "webjudge-green-agent"
 description = "The assessment hosting agent for WebJudge."
 version = "0.1.0"
 
-defaultInputModes = ["text/plain"]
-defaultOutputModes = ["text/plain"]
+defaultInputModes = ["text"]
+defaultOutputModes = ["text"]
 
 [capabilities]
 streaming = false
