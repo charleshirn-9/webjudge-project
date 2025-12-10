@@ -1,8 +1,7 @@
 name = "webjudge-green-agent"
-description = "Automated evaluator for Web Agents using Gemini vision."
+description = "The assessment hosting agent for WebJudge."
 version = "0.1.0"
 
-# These tell AgentBeats we communicate via text/JSON
 defaultInputModes = ["text"]
 defaultOutputModes = ["text"]
 
@@ -10,11 +9,18 @@ defaultOutputModes = ["text"]
 streaming = false
 
 [[skills]]
-id = "evaluate_web_task"
-name = "Web Task Evaluation"
-description = "Evaluates screenshots and action traces against a rubric."
-tags = ["green agent", "evaluation", "webjudge"]
+id = "evaluate_web_agent"
+name = "WebJudge Evaluation"
+description = "Orchestrate and grade a web agent task."
+tags = ["green agent", "webjudge"]
 examples = ["""
-Task: Find a fridge...
-Evidence: [Screenshots...]
+<white_agent_url>
+http://localhost:9002/
+</white_agent_url>
+<task_prompt>
+Find a black Nike shoe, size 10, under $150.
+</task_prompt>
+<action_budget>
+10
+</action_budget>
 """]
