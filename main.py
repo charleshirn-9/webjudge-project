@@ -1,8 +1,10 @@
+# --- START OF FILE main.py ---
 import uvicorn
 import tomli
 import json
 import re
 import os
+from starlette.responses import JSONResponse 
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.agent_execution import AgentExecutor, RequestContext
@@ -26,7 +28,6 @@ def parse_tags(text):
 class WebJudgeExecutor(AgentExecutor):
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         print("🟢 WebJudge: Received assessment request.")
-        
         user_input = context.get_user_input()
         inputs = parse_tags(user_input)
         
@@ -48,8 +49,6 @@ class WebJudgeExecutor(AgentExecutor):
             text_parts = get_text_parts(res_result.parts)
             white_agent_response_text = text_parts[0] if text_parts else ""
             
-            print(f"👈 Received response: {white_agent_response_text[:50]}...")
-
             try:
                 evidence_data = json.loads(white_agent_response_text)
                 if "evidence_bundle" in evidence_data:
@@ -72,15 +71,11 @@ class WebJudgeExecutor(AgentExecutor):
                 key_points, screenshots, action_trace, actions_taken, action_budget
             )
             
-            verdict = evaluation.get("final_verdict", "UNKNOWN")
-            score = evaluation.get("total_score", 0)
-            reasoning = evaluation.get("summary_reasoning", "No summary")
-            
             report = f"""
 ## 🏁 Evaluation Complete
-**Verdict:** {verdict}
-**Score:** {score}/100
-**Reasoning:** {reasoning}
+**Verdict:** {evaluation.get("final_verdict", "UNKNOWN")}
+**Score:** {evaluation.get("total_score", 0)}/100
+**Reasoning:** {evaluation.get("summary_reasoning", "No summary")}
 
 <json>
 {json.dumps(evaluation, indent=2)}
@@ -94,6 +89,7 @@ class WebJudgeExecutor(AgentExecutor):
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         pass
+
 
 try:
     with open("agent_card.toml", "rb") as f:
@@ -119,9 +115,12 @@ a2a_app = A2AStarletteApplication(
 
 app = a2a_app.build()
 
+async def get_card(request):
+    return JSONResponse(agent_card_dict)
+
+app.add_route("/", get_card, methods=["GET"])
+app.add_route("/health", get_card, methods=["GET"]) 
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-
-
