@@ -1,19 +1,35 @@
-from fastapi import FastAPI, HTTPException
+import os
+import tomli # Library to read the TOML file
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import uvicorn
-from green_agentv2 import evaluate_white_agent_output
+from green_agent import evaluate_white_agent_output
 
 app = FastAPI()
 
+try:
+    with open("webjudge.toml", "rb") as f:
+        AGENT_CARD = tomli.load(f)
+    if os.environ.get("RENDER_EXTERNAL_URL"):
+        AGENT_CARD["url"] = os.environ.get("RENDER_EXTERNAL_URL")
+except Exception as e:
+    print(f"⚠️ Warning: Could not load webjudge.toml: {e}")
+    AGENT_CARD = {"error": "Card not loaded"}
+
 class EvidenceBundle(BaseModel):
-    screenshots: List[str] 
+    screenshots: List[str]
     action_trace: str
 
 class AgentRequest(BaseModel):
     task_prompt: str
     action_budget: int
     evidence_bundle: EvidenceBundle
+
+
+@app.get("/")
+def get_agent_card():
+    return AGENT_CARD
 
 @app.get("/health")
 def health_check():
