@@ -94,10 +94,10 @@ class WebJudgeExecutor(AgentExecutor):
 
 
 try:
-    with open("webjudge.toml", "rb") as f:
+    with open("agent_card.toml", "rb") as f:
         agent_card_dict = tomli.load(f)
 except FileNotFoundError:
-    print("⚠️ webjudge.toml not found!")
+    print("⚠️ agent_card.toml not found!")
     agent_card_dict = {}
 
 if os.environ.get("RENDER_EXTERNAL_URL"):
@@ -141,4 +141,5 @@ app.add_route("/.well-known/agent-card.json", get_card, methods=["GET"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
