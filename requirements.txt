@@ -1,4 +1,5 @@
 starlette
+a2a
 uvicorn
 tomli
 google-generativeai
