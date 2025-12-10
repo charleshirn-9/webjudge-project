@@ -99,7 +99,7 @@ try:
     with open("agent_card.toml", "rb") as f:
         agent_card_dict = tomli.load(f)
 except FileNotFoundError:
-    print("⚠️ webjudge.toml not found!")
+    print("⚠️ agent_card.toml not found!")
     agent_card_dict = {}
 
 if os.environ.get("RENDER_EXTERNAL_URL"):
@@ -122,5 +122,6 @@ app = a2a_app.build()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
 
