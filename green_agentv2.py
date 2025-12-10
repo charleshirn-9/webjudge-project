@@ -15,7 +15,7 @@ except KeyError:
     exit()
 
 
-model = genai.GenerativeModel('gemini-2.5-pro')
+model = genai.GenerativeModel('gemini-flash-latest')
 
 def deconstruct_task_to_key_points(task_prompt: str) -> list:
     """Uses Gemini to convert a natural language task into a list of key, verifiable points."""
@@ -175,4 +175,5 @@ def evaluate_white_agent_output(white_agent_payload: dict) -> dict:
     return evaluation_result
 
 # --- END OF FILE green_agent.py (Gemini Version) ---
+
 
