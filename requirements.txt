@@ -1,7 +1,9 @@
-starlette
-a2a-sdk
+a2a-sdk[http-server]
 uvicorn
 tomli
 google-generativeai
 pillow
 httpx
+python-multipart
+starlette
+sse-starlette
