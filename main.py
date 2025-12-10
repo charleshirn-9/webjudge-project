@@ -124,8 +124,11 @@ async def get_status(request):
 app.add_route("/", get_card, methods=["GET"])
 app.add_route("/health", get_card, methods=["GET"]) 
 app.add_route("/status", get_status, methods=["GET"])
+app.add_route("/.well-known/agent-card.json", get_card, methods=["GET"])
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
