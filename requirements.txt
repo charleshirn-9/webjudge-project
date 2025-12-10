@@ -1,7 +1,6 @@
-fastapi
+a2a
 uvicorn
-python-multipart
+tomli
 google-generativeai
 pillow
-requests
-tomli
+httpx
