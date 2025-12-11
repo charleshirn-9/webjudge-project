@@ -13,5 +13,4 @@ id = "evaluate_web_agent"
 name = "WebJudge Evaluation"
 description = "Orchestrate and grade a web agent task."
 tags = ["green agent", "webjudge"]
-# ON SIMPLIFIE L'EXEMPLE AU MAXIMUM pour éviter les erreurs de parsing
 examples = ["Find a black Nike shoe under $150."]
