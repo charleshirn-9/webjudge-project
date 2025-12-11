@@ -1,0 +1,16 @@
+name = "playwright-naive-agent"
+description = "A simple white agent using Playwright."
+version = "0.1.0"
+
+defaultInputModes = ["text"]
+defaultOutputModes = ["text"]
+
+[capabilities]
+streaming = false
+
+[[skills]]
+id = "web_search"
+name = "Web Search"
+description = "Search the web and click results."
+tags = ["white agent", "search", "playwright"] 
+examples = ["Find the price of PS5."]
