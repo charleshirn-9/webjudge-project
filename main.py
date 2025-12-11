@@ -35,7 +35,6 @@ class WebJudgeExecutor(AgentExecutor):
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         print("🟢 WebJudge: Orchestration Start.")
         
-        # On va stocker tout le texte ici au lieu de l'envoyer petit à petit
         execution_log = []
         
         user_input = context.get_user_input()
@@ -49,18 +48,15 @@ class WebJudgeExecutor(AgentExecutor):
             await event_queue.enqueue_event(new_agent_text_message("❌ Error: No <white_agent_url>."))
             return
 
-        # On ajoute au log
         execution_log.append(f"📡 Orchestrating Task: {task_prompt}")
         execution_log.append(f"👉 Target Agent: {white_agent_url}\n")
 
         try:
-            # Contact White Agent
             response_obj = await send_message(white_agent_url, task_prompt)
             res_result = response_obj.root.result
             text_parts = get_text_parts(res_result.parts)
             white_resp = text_parts[0] if text_parts else ""
             
-            # Parse Evidence
             try:
                 data = json.loads(white_resp)
                 evidence = data.get("evidence_bundle", data)
@@ -72,7 +68,6 @@ class WebJudgeExecutor(AgentExecutor):
                 action_trace = white_resp
                 execution_log.append("⚠️ Warning: Received raw text evidence.")
 
-            # Grade with Gemini
             execution_log.append("🧠 Grading with Gemini...")
             key_points = deconstruct_task_to_key_points(task_prompt)
             actions_taken = len(action_trace.split('\n')) if action_trace else 0
@@ -81,7 +76,6 @@ class WebJudgeExecutor(AgentExecutor):
                 key_points, screenshots, action_trace, actions_taken, action_budget
             )
             
-            # Construction du Rapport Final
             report = f"""
 ## 🏁 Verdict: {eval_res.get("final_verdict", "UNKNOWN")}
 **Score:** {eval_res.get("total_score", 0)}/100
@@ -150,4 +144,3 @@ app.add_route("/status", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
