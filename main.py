@@ -4,9 +4,9 @@ import tomli
 import json
 import re
 import os
-from starlette.responses import JSONResponse
-from starlette.middleware import Middleware 
-from starlette.middleware.cors import CORSMiddleware 
+from starlette.responses import JSONResponse, Response
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.agent_execution import AgentExecutor, RequestContext
@@ -94,7 +94,6 @@ class WebJudgeExecutor(AgentExecutor):
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         pass
 
-
 try:
     with open("agent_card.toml", "rb") as f:
         agent_card_dict = tomli.load(f)
@@ -118,27 +117,29 @@ app = a2a_app.build()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  
-    allow_headers=["*"], 
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
+
 async def get_card(request):
+    """Sert la carte d'agent en JSON."""
+    if request.method == "HEAD":
+        return Response(media_type="application/json")
     return JSONResponse(agent_card_dict)
 
 async def get_status(request):
-    """Health check."""
+    if request.method == "HEAD":
+        return Response(media_type="application/json")
     return JSONResponse({"status": "ok", "agent": agent_card_dict.get("name")})
 
-app.add_route("/", get_card, methods=["GET"])
-app.add_route("/health", get_status, methods=["GET"])
-app.add_route("/status", get_status, methods=["GET"])
-app.add_route("/.well-known/agent-card.json", get_card, methods=["GET"])
+app.add_route("/", get_card, methods=["GET", "HEAD", "OPTIONS"])
+app.add_route("/health", get_status, methods=["GET", "HEAD", "OPTIONS"])
+app.add_route("/status", get_status, methods=["GET", "HEAD", "OPTIONS"])
+app.add_route("/.well-known/agent-card.json", get_card, methods=["GET", "HEAD", "OPTIONS"])
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-
-
