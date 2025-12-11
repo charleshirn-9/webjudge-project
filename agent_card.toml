@@ -13,14 +13,5 @@ id = "evaluate_web_agent"
 name = "WebJudge Evaluation"
 description = "Orchestrate and grade a web agent task."
 tags = ["green agent", "webjudge"]
-examples = ["""
-<white_agent_url>
-http://localhost:9002/
-</white_agent_url>
-<task_prompt>
-Find a black Nike shoe.
-</task_prompt>
-<action_budget>
-10
-</action_budget>
-"""]
+# ON SIMPLIFIE L'EXEMPLE AU MAXIMUM pour éviter les erreurs de parsing
+examples = ["Find a black Nike shoe under $150."]
