@@ -18,6 +18,8 @@ from a2a.utils import new_agent_text_message, get_text_parts
 from my_a2a import send_message
 from green_agentv2 import grade_agent_performance, deconstruct_task_to_key_points
 
+RENDER_URL = "https://webjudge-project.onrender.com"
+
 def parse_tags(text):
     tags = {}
     for tag in ["white_agent_url", "task_prompt", "action_budget"]:
@@ -100,10 +102,7 @@ except FileNotFoundError:
     print("⚠️ agent_card.toml not found!")
     agent_card_dict = {}
 
-if os.environ.get("RENDER_EXTERNAL_URL"):
-    agent_card_dict["url"] = os.environ.get("RENDER_EXTERNAL_URL")
-else:
-    agent_card_dict["url"] = "http://localhost:9001"
+agent_card_dict["url"] = RENDER_URL
 
 request_handler = DefaultRequestHandler(
     agent_executor=WebJudgeExecutor(),
@@ -126,7 +125,6 @@ app.add_middleware(
 )
 
 async def get_card(request):
-    """Sert la carte d'agent en JSON."""
     return JSONResponse(agent_card_dict)
 
 async def get_status(request):
@@ -141,5 +139,6 @@ app.add_route("/.well-known/agent-card.json", get_card, methods=["GET"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
 
