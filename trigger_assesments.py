@@ -4,7 +4,7 @@ from my_a2a import send_message
 from a2a.utils import get_text_parts 
 
 GREEN_AGENT_URL = "https://webjudge-project.onrender.com"
-# PUT YOUR WHITE AGENT URL HERE (IT MIGHT HAVE CHANGED)
+# PUT YOUR WHITE AGENT URL HERE 
 WHITE_AGENT_URL = "https://unannoyed-alda-emigrational.ngrok-free.dev" 
 
 TASK = f"""
