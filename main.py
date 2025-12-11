@@ -32,7 +32,6 @@ def parse_tags(text):
     return tags
 
 class WebJudgeExecutor(AgentExecutor):
-    class WebJudgeExecutor(AgentExecutor):
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         print("🟢 WebJudge: Orchestration Start.")
         
@@ -151,3 +150,4 @@ app.add_route("/status", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
