@@ -17,6 +17,7 @@ from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCard
 from a2a.utils import new_agent_text_message
 
+# PUT YOUR WHITE AGENT URL HERE (IT MIGHT HAVE CHANGED)
 AGENT_URL = "https://unannoyed-alda-emigrational.ngrok-free.dev"
 
 def screenshot_to_base64(screenshot_bytes):
@@ -137,3 +138,4 @@ app.add_route("/health", get_status, methods=["GET", "HEAD", "OPTIONS"])
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8001)
+
