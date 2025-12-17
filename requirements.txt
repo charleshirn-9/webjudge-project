@@ -2,6 +2,7 @@ a2a-sdk[http-server]
 uvicorn
 tomli
 google-generativeai
+playwright
 pillow
 httpx
 python-multipart
