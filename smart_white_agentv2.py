@@ -24,7 +24,7 @@ from a2a.utils import new_agent_text_message
 AGENT_URL = "https://unannoyed-alda-emigrational.ngrok-free.dev"
 
 try:
-    genai.configure(api_key="AIzaSyAJbwTQmNHbzaiHU3Dzn_MUoIeV52v9DZ8")
+    genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 except KeyError:
     print("❌ ERREUR: GOOGLE_API_KEY manquante.")
 
@@ -211,4 +211,5 @@ app.add_route("/health", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
     
