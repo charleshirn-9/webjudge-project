@@ -85,9 +85,7 @@ class WebJudgeExecutor(AgentExecutor):
 {eval_res.get("rubric_scores", {})}
             """
             execution_log.append(report)
-            
-            # --- ENVOI FINAL UNIQUE ---
-            # On joint tout le texte et on l'envoie en une seule fois
+        
             full_response = "\n".join(execution_log)
             await event_queue.enqueue_event(new_agent_text_message(full_response))
 
@@ -144,3 +142,4 @@ app.add_route("/status", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 9001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
