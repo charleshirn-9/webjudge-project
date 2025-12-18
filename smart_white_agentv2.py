@@ -1,5 +1,4 @@
 import uvicorn
-import tomli
 import json
 import os
 import base64
@@ -7,11 +6,6 @@ import asyncio
 import google.generativeai as genai
 from PIL import Image
 import io
-
-from starlette.responses import JSONResponse, Response
-from starlette.middleware import Middleware
-from starlette.middleware.cors import CORSMiddleware
-from playwright.async_api import async_playwright
 
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
@@ -21,14 +15,21 @@ from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCard
 from a2a.utils import new_agent_text_message
 
+from playwright.async_api import async_playwright
+from starlette.responses import JSONResponse, Response
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+
+# --- CONFIGURATION ---
+
 AGENT_URL = "https://webjudge-white-agent.onrender.com"
 
 try:
     genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 except KeyError:
-    print("❌ ERREUR: GOOGLE_API_KEY manquante.")
+    pass
 
-model = genai.GenerativeModel('gemini-flash-latest')
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 def screenshot_to_base64(screenshot_bytes):
     return base64.b64encode(screenshot_bytes).decode('utf-8')
@@ -40,64 +41,68 @@ class SmartPlaywrightExecutor(AgentExecutor):
     
     async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
         raw_task = context.get_user_input()
-        print(f"\n🧠 Smart Agent: Received raw task -> '{raw_task}'")
-        await event_queue.enqueue_event(new_agent_text_message(f"Analyzing task: {raw_task}..."))
-
+        print(f"\n🧠 Smart Agent: Received task -> '{raw_task}'")
+        
         print("   ✨ Optimizing search query...")
-        optimization_prompt = f"""
-        You are a search engine expert.
-        User Task: "{raw_task}"
-        
-        Extract the best, concise keyword search query to find the item or solve the task.
-        Remove unnecessary words like "find", "look for", "show me".
-        Keep specific details like model names, colors, prices if mentioned.
-        
-        Output ONLY the query string. No quotes, no markdown.
-        """
+        search_query = raw_task
         try:
-            resp = model.generate_content(optimization_prompt)
-            search_query = resp.text.strip()
-            print(f"   🔍 Optimized Query: '{search_query}'")
-            await event_queue.enqueue_event(new_agent_text_message(f"Optimized search query: '{search_query}'"))
-        except Exception as e:
-            print(f"   ⚠️ Optimization failed, using raw task. Error: {e}")
-            search_query = raw_task
+            opt_prompt = f"Convert this task into a short search engine query: '{raw_task}'. Output ONLY the query."
+            resp = model.generate_content(opt_prompt)
+            search_query = resp.text.strip().replace('"', '')
+            print(f"   🔍 Query: '{search_query}'")
+        except:
+            pass
 
         action_log = []
         screenshots_b64 = []
-        MAX_STEPS = 10 
+        MAX_STEPS = 8
+        
+        last_action_text = ""
+        loop_count = 0
 
         async with async_playwright() as p:
+            is_render = os.environ.get("RENDER") is not None
             browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context(viewport={"width": 1280, "height": 720})
+            context = await browser.new_context(viewport={"width": 1280, "height": 800})
             page = await context.new_page()
 
             try:
-                # 2. Démarrage
-                await page.goto("https://duckduckgo.com")
-                print("   📍 Start: DuckDuckGo")
+                encoded_query = search_query.replace(" ", "+")
+                start_url = f"https://duckduckgo.com/?q={encoded_query}&t=h_&ia=web"
+                print(f"   📍 Navigating directly to: {start_url}")
                 
+                await page.goto(start_url)
+                action_log.append(f"1. Direct navigation to search: {search_query}")
+                
+                # Attente initiale
+                await page.wait_for_load_state("domcontentloaded")
+                await asyncio.sleep(3)
+
                 for step in range(MAX_STEPS):
                     print(f"\n--- Step {step + 1}/{MAX_STEPS} ---")
-                    await asyncio.sleep(1)
-                    screenshot_bytes = await page.screenshot()
-                    img_pil = bytes_to_image(screenshot_bytes)
-                    screenshots_b64.append(screenshot_to_base64(screenshot_bytes))
+                    
+                    try:
+                        screenshot_bytes = await page.screenshot(timeout=5000)
+                        img_pil = bytes_to_image(screenshot_bytes)
+                        screenshots_b64.append(screenshot_to_base64(screenshot_bytes))
+                    except Exception as e:
+                        print(f"Capture error: {e}")
+                        break
 
                     prompt = f"""
-                    You are an autonomous web agent. 
-                    User Goal: "{raw_task}"
-                    Your Prepared Search Query: "{search_query}"
+                    You are a web agent. Goal: "{raw_task}".
+                    Current Query Used: "{search_query}"
                     
-                    Analyze the screenshot. Decide the next action.
+                    Tools (JSON only):
+                    1. {{ "action": "click", "text": "visible text" }}
+                    2. {{ "action": "scroll" }}
+                    3. {{ "action": "done" }} (If you see the product/answer)
                     
-                    Tools (Respond in JSON):
-                    1. {{ "action": "type", "text": "{search_query}" }} -> Type the prepared query into a search box.
-                    2. {{ "action": "click", "text": "visual text" }} -> Click an element (link, button).
-                    3. {{ "action": "scroll" }} -> Scroll down.
-                    4. {{ "action": "done" }} -> Goal achieved.
+                    If you see a cookie banner, click 'Accept' or 'Reject'.
+                    If you see a list of results, click the most relevant Link Title.
+                    If you see an error or 'Try Again', try to click something else or say "done".
                     
-                    Choose the best action. JSON ONLY.
+                    Respond ONLY with JSON.
                     """
                     
                     try:
@@ -105,72 +110,78 @@ class SmartPlaywrightExecutor(AgentExecutor):
                         text_resp = response.text.replace("```json", "").replace("```", "").strip()
                         decision = json.loads(text_resp)
                         print(f"   🤖 Thought: {decision}")
-                    except Exception as e:
-                        print(f"   ⚠️ Brain Error: {e}")
-                        action_log.append(f"Brain Error: {e}")
-                        break
+                    except:
+                        print("   ⚠️ Brain fail, defaulting to scroll")
+                        decision = {"action": "scroll"}
 
                     action_type = decision.get("action")
+                    target_text = decision.get("text", "")
+                    
+                    if action_type == "click" and target_text == last_action_text:
+                        loop_count += 1
+                    else:
+                        loop_count = 0
+                    last_action_text = target_text
+
+                    if loop_count >= 2:
+                        print("   🔄 Loop detected (clicking same thing). Forcing Scroll.")
+                        action_type = "scroll" 
+
                     action_log.append(f"Step {step+1}: {decision}")
 
-                    # 4. Exécution
-                    if action_type == "type":
-                        text_to_type = decision.get("text", search_query) 
-                        print(f"   ⌨️ Typing: {text_to_type}")
-                        try:
-                            await page.get_by_role("searchbox").fill(text_to_type)
-                            await page.keyboard.press("Enter")
-                        except:
-                            await page.keyboard.type(text_to_type)
-                            await page.keyboard.press("Enter")
-                        await page.wait_for_load_state("networkidle")
-
-                    elif action_type == "click":
-                        target_text = decision.get("text")
+                    # Exécution
+                    if action_type == "click":
                         print(f"   🖱️ Clicking: {target_text}")
                         try:
-                            await page.get_by_text(target_text, exact=False).first.click(timeout=5000)
-                            await page.wait_for_load_state("domcontentloaded")
+                            elem = page.get_by_text(target_text, exact=False).first
+                            if await elem.is_visible():
+                                await elem.click(timeout=5000)
+                                await page.wait_for_load_state("domcontentloaded")
+                                await asyncio.sleep(2)
+                            else:
+                                print("   Element not visible")
                         except Exception as e:
                             print(f"   ❌ Click Failed: {e}")
 
                     elif action_type == "scroll":
                         print("   📜 Scrolling...")
-                        await page.mouse.wheel(0, 500)
+                        await page.mouse.wheel(0, 600)
                         await asyncio.sleep(1)
 
                     elif action_type == "done":
                         print("   🎉 Task Completed.")
                         break
                     
-                    else:
-                        print("   ❓ Unknown action, skipping.")
+                    elif action_type == "type":
+                         pass 
 
             except Exception as e:
                 print(f"❌ Critical Error: {e}")
                 action_log.append(f"CRITICAL ERROR: {str(e)}")
+            
             finally:
+                print("📦 Closing browser and packaging evidence...")
                 await browser.close()
-
-        # 5. Envoi des preuves
-        response_payload = {
-            "final_answer": f"Executed: {search_query}",
-            "evidence_bundle": {
-                "screenshots": screenshots_b64,
-                "action_trace": "\n".join(action_log)
-            }
-        }
-        
-        await event_queue.enqueue_event(new_agent_text_message(json.dumps(response_payload)))
+                
+                response_payload = {
+                    "final_answer": "Agent finished execution.",
+                    "evidence_bundle": {
+                        "screenshots": screenshots_b64,
+                        "action_trace": "\n".join(action_log)
+                    }
+                }
+                
+                json_response = json.dumps(response_payload)
+                print(f"📤 Sending Payload ({len(json_response)} bytes)")
+                await event_queue.enqueue_event(new_agent_text_message(json_response))
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
         pass
 
-
 card_data = {
     "name": "smart-white-agent",
     "description": "Smart Multimodal Agent",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "defaultInputModes": ["text"],
     "defaultOutputModes": ["text"],
     "capabilities": {"streaming": False},
@@ -211,7 +222,3 @@ app.add_route("/health", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8001))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
-    
-
-
