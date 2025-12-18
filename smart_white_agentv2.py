@@ -56,7 +56,7 @@ class SmartPlaywrightExecutor(AgentExecutor):
 
         action_log = []
         screenshots_b64 = []
-        MAX_STEPS = 8
+        MAX_STEPS = 10
         
         last_action_text = ""
         loop_count = 0
@@ -233,4 +233,5 @@ app.add_route("/health", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
