@@ -21,7 +21,7 @@ from a2a.server.tasks import InMemoryTaskStore
 from a2a.types import AgentCard
 from a2a.utils import new_agent_text_message
 
-AGENT_URL = "https://unannoyed-alda-emigrational.ngrok-free.dev"
+AGENT_URL = "https://webjudge-white-agent.onrender.com"
 
 try:
     genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
@@ -213,3 +213,4 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=port)
 
     
+
