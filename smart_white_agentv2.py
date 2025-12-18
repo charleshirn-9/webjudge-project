@@ -6,7 +6,7 @@ import asyncio
 import google.generativeai as genai
 from PIL import Image
 import io
-from playwright_stealth import stealth_async
+from playwright_stealth import Stealth
 
 
 from a2a.server.apps import A2AStarletteApplication
@@ -61,7 +61,7 @@ class SmartPlaywrightExecutor(AgentExecutor):
         last_action_text = ""
         loop_count = 0
 
-        async with async_playwright() as p:
+        async with Stealth().use_async(async_playwright()) as p:
             is_render = os.environ.get("RENDER") is not None
             browser = await p.chromium.launch(
                 headless=True,
@@ -76,7 +76,6 @@ class SmartPlaywrightExecutor(AgentExecutor):
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             )
             page = await context.new_page()
-            await stealth_async(page)
 
 
             try:
@@ -87,7 +86,6 @@ class SmartPlaywrightExecutor(AgentExecutor):
                 await page.goto(start_url)
                 action_log.append(f"1. Direct navigation to search: {search_query}")
                 
-                # Attente initiale
                 await page.wait_for_load_state("domcontentloaded")
                 await asyncio.sleep(3)
 
@@ -235,3 +233,4 @@ app.add_route("/health", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
