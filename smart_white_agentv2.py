@@ -68,7 +68,7 @@ class SmartPlaywrightExecutor(AgentExecutor):
         MAX_STEPS = 10 
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=False, slow_mo=200)
+            browser = await p.chromium.launch(headless=True)
             context = await browser.new_context(viewport={"width": 1280, "height": 720})
             page = await context.new_page()
 
@@ -213,4 +213,5 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=port)
 
     
+
 
