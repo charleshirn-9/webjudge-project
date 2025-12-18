@@ -6,6 +6,8 @@ import asyncio
 import google.generativeai as genai
 from PIL import Image
 import io
+from playwright_stealth import stealth_async
+
 
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
@@ -20,7 +22,6 @@ from starlette.responses import JSONResponse, Response
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
-# --- CONFIGURATION ---
 
 AGENT_URL = "https://webjudge-white-agent.onrender.com"
 
@@ -62,9 +63,21 @@ class SmartPlaywrightExecutor(AgentExecutor):
 
         async with async_playwright() as p:
             is_render = os.environ.get("RENDER") is not None
-            browser = await p.chromium.launch(headless=True)
-            context = await browser.new_context(viewport={"width": 1280, "height": 800})
+            browser = await p.chromium.launch(
+                headless=True,
+                args=[
+                    "--disable-blink-features=AutomationControlled",
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage"
+                ]
+            )
+            context = await browser.new_context(
+                viewport={"width": 1280, "height": 800},
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
             page = await context.new_page()
+            await stealth_async(page)
+
 
             try:
                 encoded_query = search_query.replace(" ", "+")
@@ -222,4 +235,3 @@ app.add_route("/health", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8001))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
