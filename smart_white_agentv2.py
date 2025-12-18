@@ -29,7 +29,7 @@ try:
 except KeyError:
     pass
 
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-flash-latest')
 
 def screenshot_to_base64(screenshot_bytes):
     return base64.b64encode(screenshot_bytes).decode('utf-8')
@@ -222,3 +222,4 @@ app.add_route("/health", get_status, methods=["GET", "HEAD", "OPTIONS"])
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8001))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
