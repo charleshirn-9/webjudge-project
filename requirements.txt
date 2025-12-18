@@ -9,3 +9,4 @@ python-multipart
 starlette
 sse-starlette
 fastapi
+playwright-stealth
